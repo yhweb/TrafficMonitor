@@ -62,6 +62,7 @@ Note: Since version 1.86, the TrafficMonitor Lite version also provides monitori
 * Historical traffic statistics
 * Hardware information monitoring
 * Plug-in system
+* Support restarting the program from the taskbar window's right-click menu
 
 # Instructions for use
 
@@ -95,7 +96,9 @@ As the program starts, a floating window showing network speed will appear on th
 
 TrafficMonitor can display information on the taskbar. However, the default setting for TrafficMonitor shows only the main window (floating window), in order to show embedded display on the taskbar, right click the window and select "Show Taskbar Window" in the pop-up menu.
 
-Users can customize displayed items on the embedded taskbar window. By default, only the network speed is displayed. In order to display CPU and RAM usage, or other informations, please select “Display Settings” in the right-click menu of the taskbar window, and check the items you want to display in the “Display Settings” dialog box, as shown below:
+Users can customize displayed items on the embedded taskbar window. By default, only the network speed is displayed. In order to display CPU and RAM usage, or other informations, please select "Display Settings" in the right-click menu of the taskbar window, and check the items you want to display in the "Display Settings" dialog box, as shown below:
+
+In addition, you can select "Restart" in the taskbar window's right-click menu to restart TrafficMonitor with one click.
 
 <img src="./Screenshots/en_us/taskbar_item_settings.png" style="zoom:80%;" />
 
@@ -143,4 +146,38 @@ It should also be noted that the temperature monitoring function is turned off b
 # Update log
 
 **[Click here to view the update log.](./UpdateLog/update_log_en-us.md)**
+
+# Build Environment Configuration
+
+## Toolchain Requirements
+
+- Visual Studio 2022 (MSVC `v143` toolset), with the "Desktop development with C++" workload installed
+- Required components:
+  - `MFC` (Microsoft Foundation Classes): the main program is an MFC application
+  - `C++/CLI support`: only required for the standard version, used to build the `OpenHardwareMonitorApi` hardware monitoring bridge library
+- Windows 10/11 SDK (the project declares `10.0`, automatically using the latest installed version)
+
+## Solutions and Projects
+
+- `TrafficMonitor.sln`: standard version, contains `TrafficMonitor` + `OpenHardwareMonitorApi` + `PluginDemo`
+- `TrafficMonitor_Lite.sln`: Lite version, contains `TrafficMonitor` + `PluginDemo` (without hardware monitoring)
+- The main project `TrafficMonitor/TrafficMonitor.vcxproj` provides both `Debug`/`Release` (standard) and `Debug (lite)`/`Release (lite)` configurations
+
+## Key Build Options
+
+- Character set: Unicode
+- C++ standard: C++20 (`/std:c++20`)
+- Runtime: Multithreaded DLL (`/MD`) + dynamic MFC (`_AFXDLL`)
+- Target platforms: `Win32` / `x64` / `ARM64EC`
+
+## Third-party Dependencies
+
+- `LibreHardwareMonitorLib.dll`: the hardware monitoring core library, already bundled in the `OpenHardwareMonitorApi/` directory (standard version only), no additional download or build required
+
+## Troubleshooting: Encoding errors on Chinese Windows
+
+After a fresh clone, building on Chinese Windows may produce many cascading syntax errors (e.g. `ImageDrawAreaConvert is not a member`, `CDrawDoubleBuffer undeclared`, `AlignedUnionStorage template error`, etc.).
+
+- Cause: `TrafficMonitor/DrawCommonHelper.h` and `TrafficMonitor/DrawCommonHelper.cpp` in the repository are UTF-8 without BOM. On Chinese Windows (default GBK code page 936), MSVC parses them as GBK, treating the UTF-8 tail byte of a Chinese comment as a GBK double-byte lead byte and swallowing the following newline, which "eats" the next line of code into the comment.
+- Fix: add a UTF-8 BOM to these two files. In Visual Studio, open the file → "File" → "Advanced Save Options" → select "Unicode (UTF-8 with signature) - Codepage 65001" and save; or remove the Chinese comments.
 

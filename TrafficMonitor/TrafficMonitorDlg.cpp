@@ -129,6 +129,7 @@ BEGIN_MESSAGE_MAP(CTrafficMonitorDlg, CDialog)
     ON_COMMAND(ID_OPEN_TASK_MANAGER, &CTrafficMonitorDlg::OnOpenTaskManager)
     ON_MESSAGE(WM_SETTINGS_APPLIED, &CTrafficMonitorDlg::OnSettingsApplied)
     ON_COMMAND(ID_DISPLAY_SETTINGS, &CTrafficMonitorDlg::OnDisplaySettings)
+    ON_COMMAND(ID_APP_RESTART, &CTrafficMonitorDlg::OnAppRestart)
     ON_WM_LBUTTONUP()
     ON_COMMAND(ID_REFRESH_CONNECTION_LIST, &CTrafficMonitorDlg::OnRefreshConnectionList)
     ON_MESSAGE(WM_TABLET_QUERYSYSTEMGESTURESTATUS, &CTrafficMonitorDlg::OnTabletQuerysystemgesturestatus)
@@ -2969,6 +2970,16 @@ void CTrafficMonitorDlg::OnDisplaySettings()
         if (IsTaskbarWndValid())
             m_tBarDlg->WidthChanged();
     }
+}
+
+
+void CTrafficMonitorDlg::OnAppRestart()
+{
+    // 启动新进程（带 -restart 参数），新进程启动后会等待旧进程退出后再初始化
+    ShellExecuteW(GetSafeHwnd(), _T("open"), theApp.m_module_path.c_str(), _T("-restart"), theApp.m_module_dir.c_str(), SW_SHOWNORMAL);
+
+    // 投递关闭消息退出当前进程（触发 OnClose 完成配置保存与清理）
+    PostMessage(WM_CLOSE);
 }
 
 

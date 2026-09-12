@@ -62,6 +62,7 @@ TrafficMonitor提供了标准版和Lite版两种版本可用。标准版包含�
 * 历史流量统计
 * 硬件信息监控
 * 插件系统
+* 任务栏窗口右键菜单支持一键重启程序
 # 使用说明
 
 **[点击这里](https://github.com/zhongyang219/TrafficMonitor/wiki)转到Wiki页面查看关于TrafficMonitor的详细说明文档。**
@@ -87,6 +88,8 @@ TrafficMonitor提供了标准版和Lite版两种版本可用。标准版包含�
 TrafficMonitor支持将信息显示到任务栏。但是TrafficMonitor默认只显示主窗口（悬浮窗），如果需要让它嵌入到任务栏显示，请在右键菜单中选择“显示任务栏窗口”命令。
 
 任务栏窗口支持自定义显示项目，默认情况下只显示网速，如果需要显示CPU和内存利用率等其他信息，请在任务栏窗口右键菜单中选择“显示设置”，在弹出的“显示设置”对话框中勾选需要显示的项目，如下图所示：
+
+此外，在任务栏窗口右键菜单中选择“重启程序”可以一键重启 TrafficMonitor。
 
 <img src="./Screenshots/taskbar_item_settings.png" style="zoom:80%;" />
 
@@ -137,3 +140,37 @@ TrafficMonitor支持将信息显示到任务栏。但是TrafficMonitor默认只�
 # 更新日志
 
 **[点击此处查看更新日志](./UpdateLog/update_log.md)**
+
+# 编译环境配置
+
+## 工具链要求
+
+- Visual Studio 2022（MSVC `v143` 工具集），安装工作负载「使用 C++ 的桌面开发」
+- 必需组件：
+  - `MFC`（Microsoft Foundation Classes）：主程序是 MFC 应用
+  - `C++/CLI 支持`：仅标准版需要，用于编译 `OpenHardwareMonitorApi` 硬件监控桥接库
+- Windows 10/11 SDK（工程声明为 `10.0`，自动使用已安装的最新版本）
+
+## 解决方案与工程
+
+- `TrafficMonitor.sln`：标准版，包含 `TrafficMonitor` + `OpenHardwareMonitorApi` + `PluginDemo`
+- `TrafficMonitor_Lite.sln`：Lite 版，包含 `TrafficMonitor` + `PluginDemo`（不含硬件监控）
+- 主工程 `TrafficMonitor/TrafficMonitor.vcxproj` 同时提供 `Debug`/`Release`（标准）与 `Debug (lite)`/`Release (lite)` 配置
+
+## 关键编译选项
+
+- 字符集：Unicode
+- C++ 标准：C++20（`/std:c++20`）
+- 运行时：多线程 DLL（`/MD`）+ 动态 MFC（`_AFXDLL`）
+- 目标平台：`Win32` / `x64` / `ARM64EC`
+
+## 第三方依赖
+
+- `LibreHardwareMonitorLib.dll`：硬件监控核心库，已内置在 `OpenHardwareMonitorApi/` 目录（仅标准版需要），无需额外下载或构建
+
+## 常见问题：中文 Windows 下的编码错误
+
+全新 clone 仓库后在中文 Windows 上编译，可能出现大量连锁语法错误（例如 `ImageDrawAreaConvert 不是成员`、`CDrawDoubleBuffer 未声明`、`AlignedUnionStorage 模板错误` 等）。
+
+- 原因：仓库中 `TrafficMonitor/DrawCommonHelper.h` 与 `TrafficMonitor/DrawCommonHelper.cpp` 是 UTF-8 无 BOM 编码，中文 Windows 默认 GBK 代码页（936）下 MSVC 按 GBK 解析，中文注释的 UTF-8 尾字节被当作 GBK 双字节 lead byte 吞掉换行符，导致下一行代码被“吃进”注释。
+- 解决：给这两个文件补上 UTF-8 BOM。在 VS 中打开文件 →「文件」→「高级保存选项」→ 编码选择「带签名的 UTF-8（代码页 65001）」保存；或删除其中的中文注释。

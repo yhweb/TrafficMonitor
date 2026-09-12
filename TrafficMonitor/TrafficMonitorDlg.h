@@ -272,6 +272,7 @@ protected:
     afx_msg LRESULT OnSettingsApplied(WPARAM wParam, LPARAM lParam);
 public:
     afx_msg void OnDisplaySettings();
+    afx_msg void OnAppRestart();
     afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
     afx_msg void OnRefreshConnectionList();
 protected:

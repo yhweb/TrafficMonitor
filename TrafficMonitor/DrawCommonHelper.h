@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "IDrawCommon.h"
 
 //用于双缓冲绘图的类

@@ -991,26 +991,44 @@ BOOL CTrafficMonitorApp::InitInstance()
     {
         if (GetLastError() == ERROR_ALREADY_EXISTS)
         {
-            //char buff[128];
-            //string cmd_line_str{ CCommon::UnicodeToStr(cmd_line.c_str()) };
-            //sprintf_s(buff, "when_start=%d, m_no_multistart_warning=%d, cmd_line=%s", when_start, m_no_multistart_warning, cmd_line_str.c_str());
-            //CCommon::WriteLog(buff, _T(".\\start.log"));
-            if (!m_no_multistart_warning)
+            //重启模式：命令行包含 -restart 或 /restart 时，等待旧实例退出后再继续初始化
+            bool is_restart{ false };
+            std::wstring cmd_line{ ::GetCommandLineW() };
+            is_restart = (cmd_line.find(L"-restart") != std::wstring::npos || cmd_line.find(L"/restart") != std::wstring::npos);
+            if (is_restart)
             {
-                //查找已存在TrafficMonitor进程的主窗口的句柄
-                HWND exist_handel = ::FindWindow(APP_CLASS_NAME, NULL);
-                if (exist_handel != NULL)
+                for (int i = 0; i < 100; i++)   //最多等待 10 秒
                 {
-                    //弹出“TrafficMonitor已在运行”对话框
-                    CAppAlreadyRuningDlg dlg(exist_handel);
-                    dlg.DoModal();
-                }
-                else
-                {
-                    AfxMessageBox(CCommon::LoadText(IDS_AN_INSTANCE_RUNNING));
+                    ::Sleep(100);
+                    ::CloseHandle(hMutex);
+                    hMutex = ::CreateMutex(NULL, TRUE, mutex_name);
+                    if (GetLastError() != ERROR_ALREADY_EXISTS)
+                        break;   //旧实例已退出，成功获得互斥锁
                 }
             }
-            return FALSE;
+            else
+            {
+                //char buff[128];
+                //string cmd_line_str{ CCommon::UnicodeToStr(cmd_line.c_str()) };
+                //sprintf_s(buff, "when_start=%d, m_no_multistart_warning=%d, cmd_line=%s", when_start, m_no_multistart_warning, cmd_line_str.c_str());
+                //CCommon::WriteLog(buff, _T(".\\start.log"));
+                if (!m_no_multistart_warning)
+                {
+                    //查找已存在TrafficMonitor进程的主窗口的句柄
+                    HWND exist_handel = ::FindWindow(APP_CLASS_NAME, NULL);
+                    if (exist_handel != NULL)
+                    {
+                        //弹出“TrafficMonitor已在运行”对话框
+                        CAppAlreadyRuningDlg dlg(exist_handel);
+                        dlg.DoModal();
+                    }
+                    else
+                    {
+                        AfxMessageBox(CCommon::LoadText(IDS_AN_INSTANCE_RUNNING));
+                    }
+                }
+                return FALSE;
+            }
         }
     }
 
