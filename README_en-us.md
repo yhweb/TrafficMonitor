@@ -151,7 +151,7 @@ It should also be noted that the temperature monitoring function is turned off b
 
 ## Toolchain Requirements
 
-- Visual Studio 2022 (MSVC `v143` toolset), with the "Desktop development with C++" workload installed
+- Visual Studio 2026 (MSVC `v145` toolset), with the "Desktop development with C++" workload installed
 - Required components:
   - `MFC` (Microsoft Foundation Classes): the main program is an MFC application
   - `C++/CLI support`: only required for the standard version, used to build the `OpenHardwareMonitorApi` hardware monitoring bridge library
