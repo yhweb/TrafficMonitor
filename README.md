@@ -145,7 +145,7 @@ TrafficMonitor支持将信息显示到任务栏。但是TrafficMonitor默认只�
 
 ## 工具链要求
 
-- Visual Studio 2022（MSVC `v143` 工具集），安装工作负载「使用 C++ 的桌面开发」
+- Visual Studio 2026（MSVC `v145` 工具集），安装工作负载「使用 C++ 的桌面开发」
 - 必需组件：
   - `MFC`（Microsoft Foundation Classes）：主程序是 MFC 应用
   - `C++/CLI 支持`：仅标准版需要，用于编译 `OpenHardwareMonitorApi` 硬件监控桥接库
