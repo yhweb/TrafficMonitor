@@ -21,12 +21,12 @@ CSetItemOrderDlg::~CSetItemOrderDlg()
 {
 }
 
-void CSetItemOrderDlg::SetItemOrder(const std::vector<int>& item_order)
+void CSetItemOrderDlg::SetItemOrder(const std::vector<std::wstring>& item_order)
 {
     m_item_order.SetOrder(item_order);
 }
 
-const std::vector<int>& CSetItemOrderDlg::GetItemOrder() const
+const std::vector<std::wstring>& CSetItemOrderDlg::GetItemOrder() const
 {
     return m_item_order.GetItemOrderConst();
 }
@@ -146,13 +146,11 @@ void CSetItemOrderDlg::SaveItemChecked(CommonDisplayItem item, bool checked)
 
 void CSetItemOrderDlg::OnBnClickedMoveUpButton()
 {
-    // TODO: 在此添加控件通知处理程序代码
-    auto& item_list{ m_item_order.GetItemOrder() };
     int cur_index{ m_list_ctrl.GetCurSel() };
-    int item_count{ static_cast<int>(item_list.size()) };
-    if (cur_index > 0 && cur_index < item_count)
+    if (cur_index > 0 && cur_index < static_cast<int>(m_all_displayed_item.size()))
     {
-        std::swap(item_list[cur_index], item_list[cur_index - 1]);
+        std::wstring current_item_id{ CTaskbarItemOrderHelper::GetItemStableId(m_all_displayed_item[cur_index]) };
+        m_item_order.MoveItem(current_item_id, true, true);
         ShowItem();
         m_list_ctrl.SetCurSel(cur_index - 1);
         EnableCtrl(cur_index - 1);
@@ -162,13 +160,11 @@ void CSetItemOrderDlg::OnBnClickedMoveUpButton()
 
 void CSetItemOrderDlg::OnBnClickedMoveDownButton()
 {
-    // TODO: 在此添加控件通知处理程序代码
-    auto& item_list{ m_item_order.GetItemOrder() };
     int cur_index{ m_list_ctrl.GetCurSel() };
-    int item_count{ static_cast<int>(item_list.size()) };
-    if (cur_index >= 0 && cur_index < item_count - 1)
+    if (cur_index >= 0 && cur_index < static_cast<int>(m_all_displayed_item.size()) - 1)
     {
-        std::swap(item_list[cur_index], item_list[cur_index + 1]);
+        std::wstring current_item_id{ CTaskbarItemOrderHelper::GetItemStableId(m_all_displayed_item[cur_index]) };
+        m_item_order.MoveItem(current_item_id, false, true);
         ShowItem();
         m_list_ctrl.SetCurSel(cur_index + 1);
         EnableCtrl(cur_index + 1);
@@ -178,10 +174,7 @@ void CSetItemOrderDlg::OnBnClickedMoveDownButton()
 
 void CSetItemOrderDlg::OnBnClickedRestoreDefaultButton()
 {
-    // TODO: 在此添加控件通知处理程序代码
-    auto item_list{ m_item_order.GetItemOrder() };
-    std::sort(item_list.begin(), item_list.end());
-    m_item_order.SetOrder(item_list);
+    m_item_order.RestoreDefaultOrder();
     ShowItem();
 }
 

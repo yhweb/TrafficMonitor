@@ -256,7 +256,14 @@ void CTrafficMonitorApp::LoadConfig()
         m_taskbar_data.auto_set_background_color = false;
 
     m_taskbar_data.item_order.Init();
-    m_taskbar_data.item_order.FromString(ini.GetString(L"task_bar", L"item_order", L""));
+    std::wstring item_order_v2;
+    std::wstring item_order_legacy;
+    if (ini.GetString(L"task_bar", L"item_order_v2", item_order_v2))
+        m_taskbar_data.item_order.FromString(item_order_v2);
+    else if (ini.GetString(L"task_bar", L"item_order", item_order_legacy))
+        m_taskbar_data.item_order.FromLegacyString(item_order_legacy);
+    else
+        m_taskbar_data.item_order.FromLegacyString(L"");
     m_taskbar_data.plugin_display_item.FromString(ini.GetString(L"task_bar", L"plugin_display_item", L""));
     m_taskbar_data.auto_save_taskbar_color_settings_to_preset = ini.GetBool(L"task_bar", L"auto_save_taskbar_color_settings_to_preset", true);
 
@@ -412,7 +419,8 @@ void CTrafficMonitorApp::SaveConfig()
     ini.WriteInt(L"task_bar", L"light_default_style", m_taskbar_data.light_default_style);
     ini.WriteBool(L"task_bar", L"auto_set_background_color", m_taskbar_data.auto_set_background_color);
 
-    ini.WriteString(L"task_bar", L"item_order", m_taskbar_data.item_order.ToString());
+    ini.WriteString(L"task_bar", L"item_order", m_taskbar_data.item_order.ToLegacyString());
+    ini.WriteString(L"task_bar", L"item_order_v2", m_taskbar_data.item_order.ToString());
     ini.WriteString(L"task_bar", L"plugin_display_item", m_taskbar_data.plugin_display_item.ToString());
     ini.WriteBool(L"task_bar", L"auto_save_taskbar_color_settings_to_preset", m_taskbar_data.auto_save_taskbar_color_settings_to_preset);
 

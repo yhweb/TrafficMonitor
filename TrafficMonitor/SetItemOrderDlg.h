@@ -12,8 +12,8 @@ public:
     virtual ~CSetItemOrderDlg();
 
     //设置/获取显示顺序
-    void SetItemOrder(const std::vector<int>& item_order);
-    const std::vector<int>& GetItemOrder() const;
+    void SetItemOrder(const std::vector<std::wstring>& item_order);
+    const std::vector<std::wstring>& GetItemOrder() const;
 
     //设置/获取显示项目
     void SetDisplayItem(const DisplayItemSet& display_item);
