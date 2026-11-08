@@ -1426,6 +1426,9 @@ void CTrafficMonitorDlg::DoMonitorAcquisition()
             theApp.m_gpu_usage = -1;
     }
 
+    if (!m_gpu_memory_usage_helper.GetGpuMemoryUsage(theApp.m_gpu_memory_usage))
+        theApp.m_gpu_memory_usage = -1;
+
     //获取硬盘利用率
     if (lite_version /*|| is_arm64ec*/ || !theApp.m_general_data.IsHardwareEnable(HI_HDD))
     {

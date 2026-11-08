@@ -553,6 +553,9 @@
     <ClInclude Include="PdhHardwareQuery\CpuFreq.h">
       <Filter>源文件和头文件\公共的类\PdhHardwareQuery</Filter>
     </ClInclude>
+    <ClInclude Include="PdhHardwareQuery\GpuMemoryUsage.h">
+      <Filter>源文件和头文件\公共的类\PdhHardwareQuery</Filter>
+    </ClInclude>
     <ClInclude Include="PdhHardwareQuery\GpuUsage.h">
       <Filter>源文件和头文件\公共的类\PdhHardwareQuery</Filter>
     </ClInclude>
@@ -832,6 +835,9 @@
       <Filter>源文件和头文件\公共的类\PdhHardwareQuery</Filter>
     </ClCompile>
     <ClCompile Include="PdhHardwareQuery\CpuFreq.cpp">
+      <Filter>源文件和头文件\公共的类\PdhHardwareQuery</Filter>
+    </ClCompile>
+    <ClCompile Include="PdhHardwareQuery\GpuMemoryUsage.cpp">
       <Filter>源文件和头文件\公共的类\PdhHardwareQuery</Filter>
     </ClCompile>
     <ClCompile Include="PdhHardwareQuery\GpuUsage.cpp">

@@ -287,8 +287,21 @@ void CTaskBarDlg::DrawDisplayItem(IDrawCommon& drawer, DisplayItem type, CRect r
         {
             if (theApp.m_taskbar_data.cm_graph_type)
             {
-                AddHisToList(type, figure_value);
-                TryDrawGraph(drawer, rect, type);
+                if (type == TDI_GPU_USAGE)
+                {
+                    int left_width = rect.Width() / 2;
+                    AddHisToList(type, figure_value);
+                    AddValueToHistory(m_gpu_memory_history_data,
+                        m_gpu_memory_history_data_count,
+                        theApp.m_gpu_memory_usage,
+                        rect.Width() - left_width);
+                    TryDrawGpuGraph(drawer, rect);
+                }
+                else
+                {
+                    AddHisToList(type, figure_value);
+                    TryDrawGraph(drawer, rect, type);
+                }
             }
             else
             {
@@ -1361,6 +1374,15 @@ void CTaskBarDlg::AddHisToList(CommonDisplayItem item_type, int current_usage_pe
 {
     int& data_count{ m_history_data_count[item_type] };
     std::list<int>& list = m_map_history_data[item_type];
+    int graph_max_length = m_item_rects[item_type].Width();
+    if (item_type.ItemType() == TDI_GPU_USAGE)
+        graph_max_length /= 2;
+    AddValueToHistory(list, data_count, current_usage_percent, graph_max_length);
+}
+
+void CTaskBarDlg::AddValueToHistory(std::list<int>& list, int& data_count,
+    int current_usage_percent, int graph_max_length)
+{
     //将数累加到加链表的头部，直到添加的数据数量达到TASKBAR_GRAPH_STEP的倍数时计算平均数
     if (data_count % TASKBAR_GRAPH_STEP == 0)
     {
@@ -1375,9 +1397,8 @@ void CTaskBarDlg::AddHisToList(CommonDisplayItem item_type, int current_usage_pe
         //数累加到加链表的头部
         list.front() += current_usage_percent;
     }
-    size_t graph_max_length = m_item_rects[item_type].Width();
     //判断是否超过最大长度，如果超过，将链表尾部数据移除
-    if (list.size() > graph_max_length)
+    if (list.size() > static_cast<size_t>(max(graph_max_length, 0)))
     {
         list.pop_back();
     }
@@ -1412,10 +1433,33 @@ bool CTaskBarDlg::CheckClickedItem(CPoint point)
 
 void CTaskBarDlg::TryDrawGraph(IDrawCommon& drawer, const CRect& value_rect, CommonDisplayItem item_type)
 {
-    std::list<int>& list = m_map_history_data[item_type];
     COLORREF graph_color = theApp.m_taskbar_data.GetUsageGraphColor();
     if (theApp.m_taskbar_data.show_graph_dashed_box)
         drawer.DrawRectOutLine(value_rect, graph_color, 1, true);
+    DrawGraphList(drawer, value_rect, m_map_history_data[item_type]);
+}
+
+void CTaskBarDlg::TryDrawGpuGraph(IDrawCommon& drawer, const CRect& value_rect)
+{
+    COLORREF graph_color = theApp.m_taskbar_data.GetUsageGraphColor();
+    if (theApp.m_taskbar_data.show_graph_dashed_box)
+        drawer.DrawRectOutLine(value_rect, graph_color, 1, true);
+
+    int middle = value_rect.left + value_rect.Width() / 2;
+    CRect left_rect{ value_rect };
+    left_rect.right = middle;
+    CRect right_rect{ value_rect };
+    right_rect.left = middle;
+    drawer.DrawLine(CPoint(middle, value_rect.top),
+        CPoint(middle, value_rect.bottom), graph_color);
+    DrawGraphList(drawer, left_rect, m_map_history_data[TDI_GPU_USAGE]);
+    DrawGraphList(drawer, right_rect, m_gpu_memory_history_data);
+}
+
+void CTaskBarDlg::DrawGraphList(IDrawCommon& drawer, const CRect& value_rect,
+    const std::list<int>& list)
+{
+    COLORREF graph_color = theApp.m_taskbar_data.GetUsageGraphColor();
     int i{ -1 };
     for (int value : list)
     {

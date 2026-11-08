@@ -143,6 +143,8 @@ protected:
     std::map<CommonDisplayItem, std::list<int>> m_map_history_data;  //保存各项数据历史数据的链表，链表保存按照时间顺序，越靠近头部数据越新
     std::map<CommonDisplayItem, int> m_history_data_count;            //统计添加到历史数据链表的次数
 
+    std::list<int> m_gpu_memory_history_data;      // GPU memory usage history
+    int m_gpu_memory_history_data_count{};
     bool m_connot_insert_to_task_bar{ false };	//如果窗口无法嵌入任务栏，则为true
     bool m_taskbar_on_top_or_bottom{ true };		//如果任务栏在屏幕顶部或底部，则为ture
     int m_error_code{};
@@ -162,6 +164,12 @@ protected:
     CString GetMouseTipsInfo();		//获取鼠标提示
 
     void AddHisToList(CommonDisplayItem item_type, int current_usage_percent);		//将当前利用率数值添加进链表
+
+    static void AddValueToHistory(std::list<int>& list, int& data_count,
+        int current_usage_percent, int graph_max_length);
+    void TryDrawGpuGraph(IDrawCommon& drawer, const CRect& value_rect);
+    static void DrawGraphList(IDrawCommon& drawer, const CRect& value_rect,
+        const std::list<int>& list);
 
     int CalculateNetspeedPercent(unsigned __int64 net_speed);     //计算网速占网速占用图的最大值的百分比
 
