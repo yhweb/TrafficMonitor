@@ -53,12 +53,7 @@ namespace OpenHardwareMonitorApi
 
     float COpenHardwareMonitor::GpuTemperature()
     {
-        if (m_gpu_nvidia_temperature >= 0)
-            return m_gpu_nvidia_temperature;
-        else if (m_gpu_ati_temperature >= 0)
-            return m_gpu_ati_temperature;
-        else
-            return m_gpu_intel_temperature;
+        return m_gpu_temperature;
     }
 
     float COpenHardwareMonitor::HDDTemperature()
@@ -73,12 +68,12 @@ namespace OpenHardwareMonitorApi
 
     float COpenHardwareMonitor::GpuUsage()
     {
-        if (m_gpu_nvidia_usage >= 0)
-            return m_gpu_nvidia_usage;
-        else if (m_gpu_ati_usage >= 0)
-            return m_gpu_ati_usage;
-        else
-            return m_gpu_intel_usage;
+        float gpu_usage = m_gpu_nvidia_usage;
+        if (m_gpu_ati_usage > gpu_usage)
+            gpu_usage = m_gpu_ati_usage;
+        if (m_gpu_intel_usage > gpu_usage)
+            gpu_usage = m_gpu_intel_usage;
+        return gpu_usage;
     }
 
     float COpenHardwareMonitor::CpuFreq()
@@ -239,25 +234,80 @@ namespace OpenHardwareMonitorApi
     bool COpenHardwareMonitor::GetGpuUsage(IHardware^ hardware, float& gpu_usage)
     {
         float usage_max = 0;
+        bool sensor_found = false;
         for (int i = 0; i < hardware->Sensors->Length; i++)
         {
             //找到负载
             if (hardware->Sensors[i]->SensorType == SensorType::Load)
             {
+                sensor_found = true;
                 float cur_gpu_usage = Convert::ToDouble(hardware->Sensors[i]->Value);
-                if (hardware->Sensors[i]->Name == L"GPU Core")
-                {
-                    gpu_usage = cur_gpu_usage;
-                    return true;
-                }
-
                 //计算最大值
                 if (cur_gpu_usage > usage_max)
                     usage_max = cur_gpu_usage;
             }
         }
         gpu_usage = usage_max;
-        return true;
+        return sensor_found;
+    }
+
+    bool COpenHardwareMonitor::GetGpuTemperature(IHardware^ hardware, float& temperature, int& priority)
+    {
+        temperature = -1;
+        priority = -1;
+        for (int i = 0; i < hardware->Sensors->Length; i++)
+        {
+            if (hardware->Sensors[i]->SensorType != SensorType::Temperature)
+                continue;
+
+            String^ sensor_name = hardware->Sensors[i]->Name->ToLowerInvariant();
+            int current_priority = 1;
+            if (sensor_name->Contains(L"hot spot"))
+                current_priority = 4;
+            else if (sensor_name == L"gpu core" || sensor_name->EndsWith(L" core"))
+                current_priority = 3;
+            else if (sensor_name->Contains(L"gpu"))
+                current_priority = 2;
+
+            float current_temperature = Convert::ToDouble(hardware->Sensors[i]->Value);
+            if (current_priority > priority ||
+                (current_priority == priority && current_temperature > temperature))
+            {
+                temperature = current_temperature;
+                priority = current_priority;
+            }
+        }
+        return priority >= 0;
+    }
+
+    void COpenHardwareMonitor::UpdateGpuTemperature(IHardware^ hardware)
+    {
+        float current_temperature{ -1 };
+        int current_priority{ -1 };
+        if (!GetGpuTemperature(hardware, current_temperature, current_priority))
+            return;
+
+        String^ hardware_name = hardware->Name->ToLowerInvariant();
+        bool is_discrete = hardware_name->Contains(L"radeon rx")
+            || hardware_name->Contains(L"radeon pro")
+            || hardware_name->Contains(L"geforce")
+            || hardware_name->Contains(L"quadro")
+            || hardware_name->Contains(L"rtx")
+            || hardware_name->Contains(L"intel arc");
+        if (!is_discrete && current_priority == 4)
+            is_discrete = true;
+
+        if ((is_discrete && !m_gpu_temperature_is_discrete) ||
+            (is_discrete == m_gpu_temperature_is_discrete &&
+             current_priority > m_gpu_temperature_priority) ||
+            (is_discrete == m_gpu_temperature_is_discrete &&
+             current_priority == m_gpu_temperature_priority &&
+             current_temperature > m_gpu_temperature))
+        {
+            m_gpu_temperature = current_temperature;
+            m_gpu_temperature_priority = current_priority;
+            m_gpu_temperature_is_discrete = is_discrete;
+        }
     }
 
     bool COpenHardwareMonitor::GetHddUsage(IHardware^ hardware, float& hdd_usage)
@@ -290,9 +340,9 @@ namespace OpenHardwareMonitorApi
     void COpenHardwareMonitor::ResetAllValues()
     {
         m_cpu_temperature = -1;
-        m_gpu_nvidia_temperature = -1;
-        m_gpu_ati_temperature = -1;
-        m_gpu_intel_temperature = -1;
+        m_gpu_temperature = -1;
+        m_gpu_temperature_priority = -1;
+        m_gpu_temperature_is_discrete = false;
         m_hdd_temperature = -1;
         m_main_board_temperature = -1;
         m_gpu_nvidia_usage = -1;
@@ -353,22 +403,28 @@ namespace OpenHardwareMonitorApi
                         GetCpuUsage(computer->Hardware[i], m_cpu_usage);
                     break;
                 case HardwareType::GpuNvidia:
-                    if (m_gpu_nvidia_temperature < 0)
-                        GetHardwareTemperature(computer->Hardware[i], m_gpu_nvidia_temperature);
-                    if (m_gpu_nvidia_usage < 0)
-                        GetGpuUsage(computer->Hardware[i], m_gpu_nvidia_usage);
+                    UpdateGpuTemperature(computer->Hardware[i]);
+                    {
+                        float current_usage{ -1 };
+                        if (GetGpuUsage(computer->Hardware[i], current_usage) && current_usage > m_gpu_nvidia_usage)
+                            m_gpu_nvidia_usage = current_usage;
+                    }
                     break;
                 case HardwareType::GpuAmd:
-                    if (m_gpu_ati_temperature < 0)
-                        GetHardwareTemperature(computer->Hardware[i], m_gpu_ati_temperature);
-                    if (m_gpu_ati_usage < 0)
-                        GetGpuUsage(computer->Hardware[i], m_gpu_ati_usage);
+                    UpdateGpuTemperature(computer->Hardware[i]);
+                    {
+                        float current_usage{ -1 };
+                        if (GetGpuUsage(computer->Hardware[i], current_usage) && current_usage > m_gpu_ati_usage)
+                            m_gpu_ati_usage = current_usage;
+                    }
                     break;
                 case HardwareType::GpuIntel:
-                    if (m_gpu_intel_temperature < 0)
-                        GetHardwareTemperature(computer->Hardware[i], m_gpu_intel_temperature);
-                    if (m_gpu_intel_usage < 0)
-                        GetGpuUsage(computer->Hardware[i], m_gpu_intel_usage);
+                    UpdateGpuTemperature(computer->Hardware[i]);
+                    {
+                        float current_usage{ -1 };
+                        if (GetGpuUsage(computer->Hardware[i], current_usage) && current_usage > m_gpu_intel_usage)
+                            m_gpu_intel_usage = current_usage;
+                    }
                     break;
                 case HardwareType::Storage:
                 {

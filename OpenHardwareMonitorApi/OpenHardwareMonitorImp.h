@@ -36,6 +36,8 @@ namespace OpenHardwareMonitorApi {
 
     private:
         bool GetHardwareTemperature(IHardware^ hardware, float& temperature);
+        bool GetGpuTemperature(IHardware^ hardware, float& temperature, int& priority);
+        void UpdateGpuTemperature(IHardware^ hardware);
         bool GetCpuTemperature(IHardware^ hardware, float& temperature);
         bool GetGpuUsage(IHardware^ hardware, float& gpu_usage);
         bool GetHddUsage(IHardware^ hardware, float& hdd_usage);
@@ -47,9 +49,9 @@ namespace OpenHardwareMonitorApi {
 
     private:
         float m_cpu_temperature{};
-        float m_gpu_nvidia_temperature{};
-        float m_gpu_ati_temperature{};
-        float m_gpu_intel_temperature{};
+        float m_gpu_temperature{};
+        int m_gpu_temperature_priority{};
+        bool m_gpu_temperature_is_discrete{};
         float m_hdd_temperature{};
         float m_main_board_temperature{};
         float m_gpu_nvidia_usage{};
