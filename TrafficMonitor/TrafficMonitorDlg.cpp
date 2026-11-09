@@ -18,6 +18,9 @@
 #include "WineTaskbarDlg.h"
 #include "TaskbarHelper.h"
 #include "SkinManager.h"
+#include <Psapi.h>
+
+#pragma comment(lib, "Psapi.lib")
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -182,6 +185,20 @@ CString CTrafficMonitorDlg::GetMouseTipsInfo()
         temp.Format(_T("\r\n%s: %s/%s"), CCommon::LoadText(IDS_MEMORY_USAGE),
             CCommon::KBytesToString(theApp.m_used_memory),
             CCommon::KBytesToString(theApp.m_total_memory));
+        tip_info += temp;
+    }
+    if (!skin_layout.GetItem(TDI_VIRTUAL_MEMORY).show && theApp.m_virtual_memory_usage >= 0)
+    {
+        temp.Format(_T("\r\n%s: %s/%s (%d %%)"), CCommon::LoadText(IDS_VIRTUAL_MEMORY_USAGE),
+            CCommon::KBytesToString(theApp.m_used_virtual_memory),
+            CCommon::KBytesToString(theApp.m_total_virtual_memory), theApp.m_virtual_memory_usage);
+        tip_info += temp;
+    }
+    else if (theApp.m_virtual_memory_usage >= 0)
+    {
+        temp.Format(_T("\r\n%s: %s/%s"), CCommon::LoadText(IDS_VIRTUAL_MEMORY_USAGE),
+            CCommon::KBytesToString(theApp.m_used_virtual_memory),
+            CCommon::KBytesToString(theApp.m_total_virtual_memory));
         tip_info += temp;
     }
     if (!skin_layout.GetItem(TDI_CPU_FREQ).show && theApp.m_cpu_freq >= 0)
@@ -670,6 +687,8 @@ void CTrafficMonitorDlg::UpdateNotifyIconTip()
     strTip += CCommon::StringFormat(_T("\r\n<%1%>: <%2%>/s"), { CCommon::LoadText(IDS_DOWNLOAD), in_speed });
     strTip += CCommon::StringFormat(_T("\r\nCPU: <%1%> %"), { theApp.m_cpu_usage });
     strTip += CCommon::StringFormat(_T("\r\n<%1%>: <%2%> %"), { CCommon::LoadText(IDS_MEMORY), theApp.m_memory_usage });
+    if (theApp.m_virtual_memory_usage >= 0)
+        strTip += CCommon::StringFormat(_T("\r\n<%1%>: <%2%> %"), { CCommon::LoadText(IDS_VIRTUAL_MEMORY_USAGE), theApp.m_virtual_memory_usage });
     if (IsTemperatureNeeded())
     {
         if (theApp.m_general_data.IsHardwareEnable(HI_GPU) && theApp.m_gpu_usage >= 0)
@@ -1466,6 +1485,33 @@ void CTrafficMonitorDlg::DoMonitorAcquisition()
     theApp.m_used_memory = static_cast<int>((statex.ullTotalPhys - statex.ullAvailPhys) / 1024);
     theApp.m_total_memory = static_cast<int>(statex.ullTotalPhys / 1024);
 
+    //获取全机虚拟内存（已提交内存/提交上限）
+    PERFORMANCE_INFORMATION performance_info{};
+    performance_info.cb = sizeof(performance_info);
+    if (::GetPerformanceInfo(&performance_info, sizeof(performance_info)))
+    {
+        const unsigned __int64 page_size{ performance_info.PageSize };
+        theApp.m_used_virtual_memory =
+            static_cast<unsigned __int64>(performance_info.CommitTotal) * page_size / 1024;
+        theApp.m_total_virtual_memory =
+            static_cast<unsigned __int64>(performance_info.CommitLimit) * page_size / 1024;
+        if (theApp.m_total_virtual_memory != 0)
+        {
+            theApp.m_virtual_memory_usage = static_cast<int>(
+                (theApp.m_used_virtual_memory * 100 + theApp.m_total_virtual_memory / 2)
+                / theApp.m_total_virtual_memory);
+            theApp.m_virtual_memory_usage = std::clamp(theApp.m_virtual_memory_usage, 0, 100);
+        }
+        else
+        {
+            theApp.m_virtual_memory_usage = -1;
+        }
+    }
+    else
+    {
+        theApp.m_virtual_memory_usage = -1;
+    }
+
 #ifndef WITHOUT_TEMPERATURE
     //获取温度
     if (IsTemperatureNeeded() && theApp.m_pMonitor != nullptr)
@@ -1567,6 +1613,7 @@ void CTrafficMonitorDlg::DoMonitorAcquisition()
             monitor_info.down_speed = theApp.m_in_speed;
             monitor_info.cpu_usage = theApp.m_cpu_usage;
             monitor_info.memory_usage = theApp.m_memory_usage;
+            monitor_info.virtual_memory_usage = theApp.m_virtual_memory_usage;
             monitor_info.gpu_usage = theApp.m_gpu_usage;
             monitor_info.hdd_usage = theApp.m_hdd_usage;
             monitor_info.cpu_temperature = theApp.m_cpu_temperature;
@@ -1801,6 +1848,17 @@ void CTrafficMonitorDlg::OnTimer(UINT_PTR nIDEvent)
         static int last_memory_usage;
         static int memory_usage_notify_time{ -theApp.m_notify_interval };       //记录上次弹出提示时的时间
         checkNotifyTip(theApp.m_general_data.memory_usage_tip, theApp.m_memory_usage, last_memory_usage, memory_usage_notify_time, info.GetString());
+
+        //检查是否要弹出虚拟内存使用率超出提示
+        if (theApp.m_virtual_memory_usage >= 0)
+        {
+            info.Format(_T("%s %d%%!"), CCommon::LoadText(IDS_VIRTUAL_MEMORY_USAGE_EXCEED,
+                L"Virtual memory usage has been reached"), theApp.m_virtual_memory_usage);
+            static int last_virtual_memory_usage;
+            static int virtual_memory_usage_notify_time{ -theApp.m_notify_interval };
+            checkNotifyTip(theApp.m_general_data.virtual_memory_usage_tip, theApp.m_virtual_memory_usage,
+                last_virtual_memory_usage, virtual_memory_usage_notify_time, info.GetString());
+        }
 
         //检查是否要弹出CPU温度使用率超出提示
         info.Format(CCommon::LoadText(IDS_CPU_TEMPERATURE_EXCEED, _T(" %d°C!")), static_cast<int>(theApp.m_cpu_temperature));

@@ -235,7 +235,7 @@ void CTaskBarDlg::DrawDisplayItem(IDrawCommon& drawer, DisplayItem type, CRect r
     }
 
     // 绘制状态条
-    if (type == TDI_CPU || type == TDI_MEMORY || type == TDI_GPU_USAGE || type == TDI_CPU_TEMP
+    if (type == TDI_CPU || type == TDI_MEMORY || type == TDI_VIRTUAL_MEMORY || type == TDI_GPU_USAGE || type == TDI_CPU_TEMP
         || type == TDI_GPU_TEMP || type == TDI_HDD_TEMP || type == TDI_MAIN_BOARD_TEMP || type == TDI_HDD_USAGE
         || type == TDI_UP || type == TDI_DOWN || type == TDI_TOTAL_SPEED/* ||type==TDI_CPU_FREQ*/)
     {
@@ -247,6 +247,9 @@ void CTaskBarDlg::DrawDisplayItem(IDrawCommon& drawer, DisplayItem type, CRect r
             break;
         case TDI_MEMORY:
             figure_value = theApp.m_memory_usage;
+            break;
+        case TDI_VIRTUAL_MEMORY:
+            figure_value = theApp.m_virtual_memory_usage;
             break;
         case TDI_GPU_USAGE:
             figure_value = theApp.m_gpu_usage;
@@ -688,6 +691,20 @@ CString CTaskBarDlg::GetMouseTipsInfo()
         temp.Format(_T("\r\n%s: %s/%s"), CCommon::LoadText(IDS_MEMORY_USAGE),
             CCommon::KBytesToString(theApp.m_used_memory),
             CCommon::KBytesToString(theApp.m_total_memory));
+        tip_info += temp;
+    }
+    if (!IsItemShow(TDI_VIRTUAL_MEMORY) && theApp.m_virtual_memory_usage >= 0)
+    {
+        temp.Format(_T("\r\n%s: %s/%s (%d %%)"), CCommon::LoadText(IDS_VIRTUAL_MEMORY_USAGE),
+            CCommon::KBytesToString(theApp.m_used_virtual_memory),
+            CCommon::KBytesToString(theApp.m_total_virtual_memory), theApp.m_virtual_memory_usage);
+        tip_info += temp;
+    }
+    else if (theApp.m_virtual_memory_usage >= 0)
+    {
+        temp.Format(_T("\r\n%s: %s/%s"), CCommon::LoadText(IDS_VIRTUAL_MEMORY_USAGE),
+            CCommon::KBytesToString(theApp.m_used_virtual_memory),
+            CCommon::KBytesToString(theApp.m_total_virtual_memory));
         tip_info += temp;
     }
     if (!IsItemShow(TDI_CPU_FREQ) && theApp.m_cpu_freq > 0)

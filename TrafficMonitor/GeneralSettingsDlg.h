@@ -41,6 +41,7 @@ protected:
     CSpinEdit m_traffic_tip_edit;
     CComboBox2 m_traffic_tip_combo;
     CSpinEdit m_memory_tip_edit;
+    CSpinEdit m_virtual_memory_tip_edit;
     CComboBox2 m_language_combo;
     CToolTipCtrl m_toolTip;
     CSpinEdit m_monitor_span_edit;
@@ -78,6 +79,7 @@ public:
     virtual void OnOK();
     afx_msg void OnBnClickedTodayTrafficTipCheck();
     afx_msg void OnBnClickedMemoryUsageTipCheck();
+    afx_msg void OnBnClickedVirtualMemoryUsageTipCheck();
     afx_msg void OnBnClickedOpenConfigPathButton();
     afx_msg void OnBnClickedShowAllConnectionCheck();
     virtual BOOL PreTranslateMessage(MSG* pMsg);

@@ -130,6 +130,7 @@ void CTrafficMonitorApp::LoadConfig()
     m_main_wnd_data.disp_str.Get(TDI_DOWN) = CCommon::LoadText(IDS_DOWNLOAD_DISP, L": ");
     m_main_wnd_data.disp_str.Get(TDI_CPU) = L"CPU: ";
     m_main_wnd_data.disp_str.Get(TDI_MEMORY) = CCommon::LoadText(IDS_MEMORY_DISP, _T(": "));
+    m_main_wnd_data.disp_str.Get(TDI_VIRTUAL_MEMORY) = CCommon::LoadText(IDS_VIRTUAL_MEMORY_DISP, _T(": "));
 
     m_main_wnd_data.speed_short_mode = ini.GetBool(_T("config"), _T("speed_short_mode"), false);
     m_main_wnd_data.separate_value_unit_with_space = ini.GetBool(_T("config"), _T("separate_value_unit_with_space"), true);
@@ -149,6 +150,8 @@ void CTrafficMonitorApp::LoadConfig()
     m_general_data.traffic_tip_unit = ini.GetInt(L"notify_tip", L"traffic_tip_unit", 0);
     m_general_data.memory_usage_tip.enable = ini.GetBool(L"notify_tip", L"memory_usage_tip_enable", false);
     m_general_data.memory_usage_tip.tip_value = ini.GetInt(L"notify_tip", L"memory_tip_value", 80);
+    m_general_data.virtual_memory_usage_tip.enable = ini.GetBool(L"notify_tip", L"virtual_memory_usage_tip_enable", false);
+    m_general_data.virtual_memory_usage_tip.tip_value = ini.GetInt(L"notify_tip", L"virtual_memory_tip_value", 80);
     m_general_data.cpu_temp_tip.enable = ini.GetBool(L"notify_tip", L"cpu_temperature_tip_enable", false);
     m_general_data.cpu_temp_tip.tip_value = ini.GetInt(L"notify_tip", L"cpu_temperature_tip_value", 80);
     m_general_data.gpu_temp_tip.enable = ini.GetBool(L"notify_tip", L"gpu_temperature_tip_enable", false);
@@ -363,6 +366,8 @@ void CTrafficMonitorApp::SaveConfig()
     ini.WriteInt(L"notify_tip", L"traffic_tip_unit", m_general_data.traffic_tip_unit);
     ini.WriteBool(L"notify_tip", L"memory_usage_tip_enable", m_general_data.memory_usage_tip.enable);
     ini.WriteInt(L"notify_tip", L"memory_tip_value", m_general_data.memory_usage_tip.tip_value);
+    ini.WriteBool(L"notify_tip", L"virtual_memory_usage_tip_enable", m_general_data.virtual_memory_usage_tip.enable);
+    ini.WriteInt(L"notify_tip", L"virtual_memory_tip_value", m_general_data.virtual_memory_usage_tip.tip_value);
     ini.WriteBool(L"notify_tip", L"cpu_temperature_tip_enable", m_general_data.cpu_temp_tip.enable);
     ini.WriteInt(L"notify_tip", L"cpu_temperature_tip_value", m_general_data.cpu_temp_tip.tip_value);
     ini.WriteBool(L"notify_tip", L"gpu_temperature_tip_enable", m_general_data.gpu_temp_tip.enable);
@@ -1436,6 +1441,7 @@ double CTrafficMonitorApp::GetMonitorValue(MonitorItem item)
     case MI_DOWN: return m_in_speed;
     case MI_CPU: return m_cpu_usage;
     case MI_MEMORY: return m_memory_usage;
+    case MI_VIRTUAL_MEMORY: return m_virtual_memory_usage;
     case MI_GPU_USAGE: return m_gpu_usage;
     case MI_CPU_TEMP: return m_cpu_temperature;
     case MI_GPU_TEMP: return m_gpu_temperature;
@@ -1469,6 +1475,7 @@ const wchar_t* CTrafficMonitorApp::GetMonitorValueString(MonitorItem item, int i
         case MI_DOWN: display_item = DisplayItem::TDI_DOWN; break;
         case MI_CPU: display_item = DisplayItem::TDI_CPU; break;
         case MI_MEMORY: display_item = DisplayItem::TDI_MEMORY; break;
+        case MI_VIRTUAL_MEMORY: display_item = DisplayItem::TDI_VIRTUAL_MEMORY; break;
         case MI_GPU_USAGE: display_item = DisplayItem::TDI_GPU_USAGE; break;
         case MI_CPU_TEMP: display_item = DisplayItem::TDI_CPU_TEMP; break;
         case MI_GPU_TEMP: display_item = DisplayItem::TDI_GPU_TEMP; break;

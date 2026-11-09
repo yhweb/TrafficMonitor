@@ -365,6 +365,7 @@ struct GeneralSettingData
         int tip_value;              //要弹出提示的临界值
     };
     NotifyTipSettings memory_usage_tip;     //用内存使用率超出提示
+    NotifyTipSettings virtual_memory_usage_tip;     //虚拟内存使用率超出提示
     NotifyTipSettings cpu_temp_tip;         //CPU温度超出提示
     NotifyTipSettings gpu_temp_tip;         //显卡温度超出提示
     NotifyTipSettings hdd_temp_tip;         //硬盘温度超出提示

@@ -310,7 +310,7 @@ void CSkinFile::LoadFromIni(const wstring& file_path)
     CSettingsHelper ini(file_path);
     //获取当前皮肤的文字颜色
     std::map<CommonDisplayItem, COLORREF> text_colors{};
-    ini.LoadMainWndColors(_T("skin"), _T("text_color"), { TDI_UP, TDI_DOWN, TDI_CPU, TDI_MEMORY }, text_colors, 0);
+    ini.LoadMainWndColors(_T("skin"), _T("text_color"), { TDI_UP, TDI_DOWN, TDI_CPU, TDI_MEMORY, TDI_VIRTUAL_MEMORY }, text_colors, 0);
     for (const auto& item : text_colors)
     {
         m_skin_info.text_color.push_back(item.second);
@@ -334,6 +334,7 @@ void CSkinFile::LoadFromIni(const wstring& file_path)
     getDisplayTextFromIni(TDI_DOWN, L"down_string");
     getDisplayTextFromIni(TDI_CPU, L"cpu_string");
     getDisplayTextFromIni(TDI_MEMORY, L"memory_string");
+    getDisplayTextFromIni(TDI_VIRTUAL_MEMORY, L"virtual_memory_string");
     //获取预览区大小
     m_preview_info.width = theApp.DPI(ini.GetInt(_T("layout"), _T("preview_width"), 238));
     m_preview_info.height = theApp.DPI(ini.GetInt(_T("layout"), _T("preview_height"), 105));
@@ -360,10 +361,15 @@ void CSkinFile::LoadFromIni(const wstring& file_path)
     m_layout_info.layout_l.layout_items[TDI_MEMORY].y = theApp.DPI(ini.GetInt(_T("layout"), _T("memory_y_l"), 21));
     m_layout_info.layout_l.layout_items[TDI_MEMORY].width = theApp.DPI(ini.GetInt(_T("layout"), _T("memory_width_l"), 110));
     m_layout_info.layout_l.layout_items[TDI_MEMORY].align = static_cast<Alignment>(ini.GetInt(_T("layout"), _T("memory_align_l"), 0));
+    m_layout_info.layout_l.layout_items[TDI_VIRTUAL_MEMORY].x = theApp.DPI(ini.GetInt(_T("layout"), _T("virtual_memory_x_l"), 12));
+    m_layout_info.layout_l.layout_items[TDI_VIRTUAL_MEMORY].y = theApp.DPI(ini.GetInt(_T("layout"), _T("virtual_memory_y_l"), 48));
+    m_layout_info.layout_l.layout_items[TDI_VIRTUAL_MEMORY].width = theApp.DPI(ini.GetInt(_T("layout"), _T("virtual_memory_width_l"), 218));
+    m_layout_info.layout_l.layout_items[TDI_VIRTUAL_MEMORY].align = static_cast<Alignment>(ini.GetInt(_T("layout"), _T("virtual_memory_align_l"), 0));
     m_layout_info.layout_l.layout_items[TDI_UP].show = ini.GetBool(_T("layout"), _T("show_up_l"), true);
     m_layout_info.layout_l.layout_items[TDI_DOWN].show = ini.GetBool(_T("layout"), _T("show_down_l"), true);
     m_layout_info.layout_l.layout_items[TDI_CPU].show = ini.GetBool(_T("layout"), _T("show_cpu_l"), true);
     m_layout_info.layout_l.layout_items[TDI_MEMORY].show = ini.GetBool(_T("layout"), _T("show_memory_l"), true);
+    m_layout_info.layout_l.layout_items[TDI_VIRTUAL_MEMORY].show = ini.GetBool(_T("layout"), _T("show_virtual_memory_l"), false);
     m_preview_info.l_pos.x = theApp.DPI(ini.GetInt(_T("layout"), _T("preview_x_l"), 0));
     m_preview_info.l_pos.y = theApp.DPI(ini.GetInt(_T("layout"), _T("preview_y_l"), 47));
 
@@ -385,10 +391,15 @@ void CSkinFile::LoadFromIni(const wstring& file_path)
     m_layout_info.layout_s.layout_items[TDI_MEMORY].y = theApp.DPI(ini.GetInt(_T("layout"), _T("memory_y_s"), 0));
     m_layout_info.layout_s.layout_items[TDI_MEMORY].width = theApp.DPI(ini.GetInt(_T("layout"), _T("memory_width_s"), 0));
     m_layout_info.layout_s.layout_items[TDI_MEMORY].align = static_cast<Alignment>(ini.GetInt(_T("layout"), _T("memory_align_s"), 0));
+    m_layout_info.layout_s.layout_items[TDI_VIRTUAL_MEMORY].x = theApp.DPI(ini.GetInt(_T("layout"), _T("virtual_memory_x_s"), 0));
+    m_layout_info.layout_s.layout_items[TDI_VIRTUAL_MEMORY].y = theApp.DPI(ini.GetInt(_T("layout"), _T("virtual_memory_y_s"), 0));
+    m_layout_info.layout_s.layout_items[TDI_VIRTUAL_MEMORY].width = theApp.DPI(ini.GetInt(_T("layout"), _T("virtual_memory_width_s"), 0));
+    m_layout_info.layout_s.layout_items[TDI_VIRTUAL_MEMORY].align = static_cast<Alignment>(ini.GetInt(_T("layout"), _T("virtual_memory_align_s"), 0));
     m_layout_info.layout_s.layout_items[TDI_UP].show = ini.GetBool(_T("layout"), _T("show_up_s"), true);
     m_layout_info.layout_s.layout_items[TDI_DOWN].show = ini.GetBool(_T("layout"), _T("show_down_s"), true);
     m_layout_info.layout_s.layout_items[TDI_CPU].show = ini.GetBool(_T("layout"), _T("show_cpu_s"), false);
     m_layout_info.layout_s.layout_items[TDI_MEMORY].show = ini.GetBool(_T("layout"), _T("show_memory_s"), false);
+    m_layout_info.layout_s.layout_items[TDI_VIRTUAL_MEMORY].show = ini.GetBool(_T("layout"), _T("show_virtual_memory_s"), false);
     m_preview_info.s_pos.x = theApp.DPI(ini.GetInt(_T("layout"), _T("preview_x_s"), 0));
     m_preview_info.s_pos.y = theApp.DPI(ini.GetInt(_T("layout"), _T("preview_y_s"), 0));
 }
@@ -526,6 +537,7 @@ void CSkinFile::DrawPreview(CDC* pDC, CRect rect)
                         int brightness{ (GetRValue(cl) + GetGValue(cl) + GetBValue(cl)) / 2 };
                         if (plugin != nullptr && plugin->GetAPIVersion() >= 2)
                         {
+                            plugin->OnExtenedInfo(ITMPlugin::EI_LABEL_TEXT_COLOR, std::to_wstring(cl).c_str());
                             plugin->OnExtenedInfo(ITMPlugin::EI_VALUE_TEXT_COLOR, std::to_wstring(cl).c_str());
                         }
                         draw.GetDC()->SetTextColor(cl);
@@ -686,6 +698,7 @@ void CSkinFile::DrawItemsInfo(IDrawCommon& drawer, Layout& layout, CFont& font) 
                 ITMPlugin* plugin = theApp.m_plugins.GetPluginByItem(plugin_item);
                 if (plugin != nullptr && plugin->GetAPIVersion() >= 2)
                 {
+                    plugin->OnExtenedInfo(ITMPlugin::EI_LABEL_TEXT_COLOR, std::to_wstring(cl).c_str());
                     plugin->OnExtenedInfo(ITMPlugin::EI_VALUE_TEXT_COLOR, std::to_wstring(cl).c_str());
                 }
                 drawer.GetDC()->SetTextColor(cl);
@@ -731,6 +744,9 @@ string CSkinFile::GetDisplayItemXmlNodeName(DisplayItem display_item)
         break;
     case TDI_MEMORY:
         return "memory";
+        break;
+    case TDI_VIRTUAL_MEMORY:
+        return "virtual_memory";
         break;
     case TDI_GPU_USAGE:
         return "gpu";

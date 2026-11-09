@@ -248,6 +248,7 @@ public:
         int hdd_temperature{};
         int main_board_temperature{};
         int cpu_freq{};
+        int virtual_memory_usage{ -1 };
     };
 
     /**
@@ -377,7 +378,8 @@ public:
         MI_HDD_USAGE,           /**< 硬盘利用率 */
         MI_CPU_FREQ,            /**< CPU频率 */
         MI_TODAY_UP_TRAFFIC,    /**< 今日上传流量 */
-        MI_TODAY_DOWN_TRAFFIC   /**< 今日下载流量 */
+        MI_TODAY_DOWN_TRAFFIC,  /**< 今日下载流量 */
+        MI_VIRTUAL_MEMORY       /**< 虚拟内存利用率 */
     };
 
     /**

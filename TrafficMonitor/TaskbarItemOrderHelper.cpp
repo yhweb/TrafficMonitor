@@ -285,6 +285,8 @@ std::wstring CTaskbarItemOrderHelper::GetItemStableId(CommonDisplayItem item)
         return L"B:CPU";
     case TDI_MEMORY:
         return L"B:MEMORY";
+    case TDI_VIRTUAL_MEMORY:
+        return L"B:VIRTUAL_MEMORY";
     case TDI_GPU_USAGE:
         return L"B:GPU_USAGE";
     case TDI_CPU_TEMP:

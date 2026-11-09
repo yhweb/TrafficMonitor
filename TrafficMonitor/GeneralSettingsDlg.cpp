@@ -50,6 +50,7 @@ void CGeneralSettingsDlg::SetControlMouseWheelEnable(bool enable)
     m_language_combo.SetMouseWheelEnable(enable);
     m_traffic_tip_edit.SetMouseWheelEnable(enable);
     m_memory_tip_edit.SetMouseWheelEnable(enable);
+    m_virtual_memory_tip_edit.SetMouseWheelEnable(enable);
     m_monitor_span_edit.SetMouseWheelEnable(enable);
     m_cpu_temp_tip_edit.SetMouseWheelEnable(enable);
     m_gpu_temp_tip_edit.SetMouseWheelEnable(enable);
@@ -97,6 +98,9 @@ bool CGeneralSettingsDlg::InitializeControls()
         { CtrlTextInfo::L4, IDC_MEMORY_USAGE_TIP_CHECK, CtrlTextInfo::W24 },
         { CtrlTextInfo::L3, IDC_MEMORY_USAGE_TIP_EDIT },
         { CtrlTextInfo::L2, IDC_MEMORY_USAGE_BACK_STATIC },
+        { CtrlTextInfo::L4, IDC_VIRTUAL_MEMORY_USAGE_TIP_CHECK, CtrlTextInfo::W24 },
+        { CtrlTextInfo::L3, IDC_VIRTUAL_MEMORY_USAGE_TIP_EDIT },
+        { CtrlTextInfo::L2, IDC_VIRTUAL_MEMORY_USAGE_BACK_STATIC },
         { CtrlTextInfo::L4, IDC_CPU_TEMP_TIP_CHECK, CtrlTextInfo::W24 },
         { CtrlTextInfo::L3, IDC_CPU_TEMP_TIP_EDIT },
         { CtrlTextInfo::L2, IDC_CPU_TEMP_STATIC },
@@ -185,6 +189,7 @@ void CGeneralSettingsDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_TODAY_TRAFFIC_TIP_EDIT, m_traffic_tip_edit);
     DDX_Control(pDX, IDC_TODAY_TRAFFIC_TIP_COMBO, m_traffic_tip_combo);
     DDX_Control(pDX, IDC_MEMORY_USAGE_TIP_EDIT, m_memory_tip_edit);
+    DDX_Control(pDX, IDC_VIRTUAL_MEMORY_USAGE_TIP_EDIT, m_virtual_memory_tip_edit);
     DDX_Control(pDX, IDC_LANGUAGE_COMBO, m_language_combo);
     DDX_Control(pDX, IDC_MONITOR_SPAN_EDIT, m_monitor_span_edit);
     DDX_Control(pDX, IDC_CPU_TEMP_TIP_EDIT, m_cpu_temp_tip_edit);
@@ -202,6 +207,7 @@ void CGeneralSettingsDlg::SetControlEnable()
     m_traffic_tip_edit.EnableWindow(m_data.traffic_tip_enable);
     m_traffic_tip_combo.EnableWindow(m_data.traffic_tip_enable);
     m_memory_tip_edit.EnableWindow(m_data.memory_usage_tip.enable);
+    m_virtual_memory_tip_edit.EnableWindow(m_data.virtual_memory_usage_tip.enable);
     m_cpu_temp_tip_edit.EnableWindow(m_data.cpu_temp_tip.enable);
     m_gpu_temp_tip_edit.EnableWindow(m_data.gpu_temp_tip.enable);
     m_hdd_temp_tip_edit.EnableWindow(m_data.hdd_temp_tip.enable);
@@ -224,6 +230,7 @@ BEGIN_MESSAGE_MAP(CGeneralSettingsDlg, CTabDlg)
     ON_BN_CLICKED(IDC_AUTO_RUN_CHECK, &CGeneralSettingsDlg::OnBnClickedAutoRunCheck)
     ON_BN_CLICKED(IDC_TODAY_TRAFFIC_TIP_CHECK, &CGeneralSettingsDlg::OnBnClickedTodayTrafficTipCheck)
     ON_BN_CLICKED(IDC_MEMORY_USAGE_TIP_CHECK, &CGeneralSettingsDlg::OnBnClickedMemoryUsageTipCheck)
+    ON_BN_CLICKED(IDC_VIRTUAL_MEMORY_USAGE_TIP_CHECK, &CGeneralSettingsDlg::OnBnClickedVirtualMemoryUsageTipCheck)
     ON_BN_CLICKED(IDC_OPEN_CONFIG_PATH_BUTTON, &CGeneralSettingsDlg::OnBnClickedOpenConfigPathButton)
     ON_BN_CLICKED(IDC_SHOW_ALL_CONNECTION_CHECK, &CGeneralSettingsDlg::OnBnClickedShowAllConnectionCheck)
     ON_BN_CLICKED(IDC_USE_CPU_TIME_RADIO, &CGeneralSettingsDlg::OnBnClickedUseCpuTimeRadio)
@@ -334,6 +341,9 @@ BOOL CGeneralSettingsDlg::OnInitDialog()
     CheckDlgButton(IDC_MEMORY_USAGE_TIP_CHECK, m_data.memory_usage_tip.enable);
     m_memory_tip_edit.SetRange(1, 100);
     m_memory_tip_edit.SetValue(m_data.memory_usage_tip.tip_value);
+    CheckDlgButton(IDC_VIRTUAL_MEMORY_USAGE_TIP_CHECK, m_data.virtual_memory_usage_tip.enable);
+    m_virtual_memory_tip_edit.SetRange(1, 100);
+    m_virtual_memory_tip_edit.SetValue(m_data.virtual_memory_usage_tip.tip_value);
 
     CheckDlgButton(IDC_CPU_TEMP_TIP_CHECK, m_data.cpu_temp_tip.enable);
     m_cpu_temp_tip_edit.SetRange(1, 120);
@@ -502,6 +512,8 @@ void CGeneralSettingsDlg::OnOK()
     };
     m_data.memory_usage_tip.tip_value = m_memory_tip_edit.GetValue();
     checkTipValue(m_data.memory_usage_tip.tip_value);
+    m_data.virtual_memory_usage_tip.tip_value = m_virtual_memory_tip_edit.GetValue();
+    checkTipValue(m_data.virtual_memory_usage_tip.tip_value);
 
     m_data.cpu_temp_tip.tip_value = m_cpu_temp_tip_edit.GetValue();
     checkTempTipValue(m_data.cpu_temp_tip.tip_value);
@@ -557,6 +569,12 @@ void CGeneralSettingsDlg::OnBnClickedMemoryUsageTipCheck()
 {
     // TODO: 在此添加控件通知处理程序代码
     m_data.memory_usage_tip.enable = (IsDlgButtonChecked(IDC_MEMORY_USAGE_TIP_CHECK) != 0);
+    SetControlEnable();
+}
+
+void CGeneralSettingsDlg::OnBnClickedVirtualMemoryUsageTipCheck()
+{
+    m_data.virtual_memory_usage_tip.enable = (IsDlgButtonChecked(IDC_VIRTUAL_MEMORY_USAGE_TIP_CHECK) != 0);
     SetControlEnable();
 }
 
